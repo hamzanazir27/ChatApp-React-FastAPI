@@ -23,7 +23,10 @@ app.add_middleware(
 )
 
 # Serve React build files (after running npm run build in frontend/)
-app.mount("/static", StaticFiles(directory="../frontend/dist/assets"), name="static")
+from fastapi.staticfiles import StaticFiles
+
+app.mount("/", StaticFiles(directory="../client/dist", html=True), name="static")
+
 
 @app.get("/")
 async def serve_react_index():
