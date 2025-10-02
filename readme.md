@@ -14,7 +14,7 @@ chatapp_react_fastapi/
 │   ├── main.py             # Entry point for backend server (Socket.IO mounted)
 │   └── venv/               # Optional: Python virtual environment
 │
-├── frontend/               # Frontend (Vite + React)
+├── client/               # Frontend (Vite + React)
 │   ├── index.html
 │   ├── package.json
 │   └── src/
