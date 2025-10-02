@@ -2,33 +2,38 @@ import uvicorn
 import socketio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.staticfiles import StaticFiles
+from fastapi.responses import FileResponse
+import os
 
-# Socket.IO server (sirf socket.io use ho raha hai, websockets nahi likh rahe manually)
-sio = socketio.AsyncServer(cors_allowed_origins=["http://localhost:5173"], async_mode="asgi")
+# Frontend origin allowed (for dev mode only)
+FRONTEND_ORIGINS = ["http://localhost:5173"]
 
-# FastAPI app
+sio = socketio.AsyncServer(cors_allowed_origins="*", async_mode="asgi")
 app = FastAPI()
-
-# Attach socket.io with FastAPI
 socket_app = socketio.ASGIApp(sio, other_asgi_app=app)
 
-# Allow CORS
+# CORS (only needed for local dev, not when deployed together)
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["http://localhost:5173"],  # Vite frontend
+    allow_origins=FRONTEND_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-@app.get("/")
-async def root():
-    return {"message": "Socket.IO server running!"}
+# Serve React build files (after running npm run build in frontend/)
+app.mount("/static", StaticFiles(directory="../frontend/dist/assets"), name="static")
 
-# --- Socket.IO Events ---
+@app.get("/")
+async def serve_react_index():
+    index_path = os.path.join("../frontend/dist", "index.html")
+    return FileResponse(index_path)
+
+# Socket.IO events
 @sio.event
 async def connect(sid, environ):
-    print("🔌 Client connected:", sid)
+    print("✅ Client connected:", sid)
 
 @sio.event
 async def disconnect(sid):
@@ -36,9 +41,8 @@ async def disconnect(sid):
 
 @sio.event
 async def chat_message(sid, data):
-    # data: {"name": "Hamza", "message": "Hello!"}
-    print("Message:", data)
-    await sio.emit("chat_message", {"sid": sid, "name": data["name"], "message": data["message"]})
+    print(f"💬 {sid} says: {data}")
+    await sio.emit("chat_message", {"sid": sid, "message": data})
 
 if __name__ == "__main__":
-    uvicorn.run(socket_app, host="127.0.0.1", port=8000, reload=True)
+    uvicorn.run("main:socket_app", host="0.0.0.0", port=8000, reload=True)
