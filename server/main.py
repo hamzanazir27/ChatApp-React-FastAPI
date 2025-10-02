@@ -36,9 +36,9 @@ async def disconnect(sid):
 
 @sio.event
 async def chat_message(sid, data):
-    print(f"💬 {sid} says: {data}")
-    # Broadcast to all clients
-    await sio.emit("chat_message", {"sid": sid, "message": data})
+    # data: {"name": "Hamza", "message": "Hello!"}
+    print("Message:", data)
+    await sio.emit("chat_message", {"sid": sid, "name": data["name"], "message": data["message"]})
 
 if __name__ == "__main__":
     uvicorn.run(socket_app, host="127.0.0.1", port=8000, reload=True)
